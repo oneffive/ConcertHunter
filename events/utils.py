@@ -21,7 +21,7 @@ def get_tm_artist(artist_name):
             return []
 
         artists_data = []
-        for 
+        for item in data['_embedded']['attractions']:
             image_url = ""
             if 'images' in item:
                 
