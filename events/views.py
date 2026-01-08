@@ -7,7 +7,7 @@ from django.utils import timezone
 from .forms import ArtistSearchForm, SubscriptionForm
 from .utils import get_tm_artist, get_tm_artist_details
 from .models import Artist, Subscription, Event
-from deep_translator import GoogleTranslator  
+from deep_translator import GoogleTranslator
 
 def artist_search(request):
     search_form = ArtistSearchForm()
@@ -27,30 +27,26 @@ def artist_search(request):
 
 @login_required
 def subscribe(request, tm_id):
-    
     artist_data = get_tm_artist_details(tm_id)
     
     if not artist_data:
-        messages.error(request, "Не удалось получить данные об артисте")
+        messages.error(request, "Не удалось получить данные об артисте.")
         return redirect('search')
 
-    
     if request.method == 'POST':
         form = SubscriptionForm(request.POST)
         if form.is_valid():
             raw_city = form.cleaned_data['city']
 
-            
             try:
                 
                 city_english = GoogleTranslator(source='auto', target='en').translate(raw_city)
-               
+                
+                city_english = city_english.strip().title()
             except Exception as e:
                 print(f"Ошибка перевода: {e}")
-                city_english = raw_city  
-            
+                city_english = raw_city.strip().title()
 
-           
             artist, created = Artist.objects.get_or_create(
                 tm_id=artist_data['tm_id'],
                 defaults={
@@ -83,20 +79,17 @@ def subscribe(request, tm_id):
 
 @login_required
 def dashboard(request):
-    
     user_subscriptions = Subscription.objects.filter(user=request.user, is_active=True)
-    
     
     q_objects = Q()
     for sub in user_subscriptions:
-        q_objects |= Q(artist=sub.artist, city=sub.city) 
+       
+        q_objects |= Q(artist=sub.artist, city__iexact=sub.city)
 
-    
     if user_subscriptions.exists():
         events = Event.objects.filter(q_objects, date__gte=timezone.now()).order_by('date')
     else:
         events = Event.objects.none()
-    
     
     map_data = []
     for event in events:
@@ -113,6 +106,6 @@ def dashboard(request):
 
     context = {
         'events': events,
-        'map_data_json': json.dumps(map_data) 
+        'map_data_json': json.dumps(map_data)
     }
     return render(request, 'events/dashboard.html', context)
