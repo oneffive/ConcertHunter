@@ -1,13 +1,13 @@
+import json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import ArtistSearchForm, SubscriptionForm
-from .utils import get_tm_artist
-from .utils import get_tm_artist_details
-import json 
-from django.db.models import Q 
+from django.db.models import Q
 from django.utils import timezone
+from .forms import ArtistSearchForm, SubscriptionForm
+from .utils import get_tm_artist, get_tm_artist_details
 from .models import Artist, Subscription, Event
+from deep_translator import GoogleTranslator  
 
 def artist_search(request):
     search_form = ArtistSearchForm()
@@ -38,9 +38,19 @@ def subscribe(request, tm_id):
     if request.method == 'POST':
         form = SubscriptionForm(request.POST)
         if form.is_valid():
-            city = form.cleaned_data['city']
+            raw_city = form.cleaned_data['city']
 
             
+            try:
+                
+                city_english = GoogleTranslator(source='auto', target='en').translate(raw_city)
+               
+            except Exception as e:
+                print(f"Ошибка перевода: {e}")
+                city_english = raw_city  
+            
+
+           
             artist, created = Artist.objects.get_or_create(
                 tm_id=artist_data['tm_id'],
                 defaults={
@@ -49,16 +59,17 @@ def subscribe(request, tm_id):
                 }
             )
 
+            
             sub, sub_created = Subscription.objects.get_or_create(
                 user=request.user,
                 artist=artist,
-                city=city
+                city=city_english
             )
 
             if sub_created:
-                messages.success(request, f"Вы подписались на {artist.name} в городе {city}")
+                messages.success(request, f"Вы подписались на {artist.name} в городе {city_english}!")
             else:
-                messages.info(request, "Вы уже подписаны на этого артиста в этом городе")
+                messages.info(request, f"Вы уже подписаны на этого артиста в городе {city_english}.")
             
             return redirect('search')
     else:
@@ -70,6 +81,7 @@ def subscribe(request, tm_id):
     }
     return render(request, 'events/subscribe.html', context)
 
+@login_required
 def dashboard(request):
     
     user_subscriptions = Subscription.objects.filter(user=request.user, is_active=True)
@@ -80,7 +92,10 @@ def dashboard(request):
         q_objects |= Q(artist=sub.artist, city=sub.city) 
 
     
-    events = Event.objects.filter(q_objects, date__gte=timezone.now()).order_by('date')
+    if user_subscriptions.exists():
+        events = Event.objects.filter(q_objects, date__gte=timezone.now()).order_by('date')
+    else:
+        events = Event.objects.none()
     
     
     map_data = []
