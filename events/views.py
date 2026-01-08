@@ -3,8 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import ArtistSearchForm, SubscriptionForm
 from .utils import get_tm_artist
-from .models import Artist, Subscription
 from .utils import get_tm_artist_details
+import json 
+from django.db.models import Q 
+from django.utils import timezone
+from .models import Artist, Subscription, Event
 
 def artist_search(request):
     search_form = ArtistSearchForm()
@@ -66,3 +69,35 @@ def subscribe(request, tm_id):
         'artist': artist_data
     }
     return render(request, 'events/subscribe.html', context)
+
+def dashboard(request):
+    
+    user_subscriptions = Subscription.objects.filter(user=request.user, is_active=True)
+    
+    
+    q_objects = Q()
+    for sub in user_subscriptions:
+        q_objects |= Q(artist=sub.artist, city=sub.city) 
+
+    
+    events = Event.objects.filter(q_objects, date__gte=timezone.now()).order_by('date')
+    
+    
+    map_data = []
+    for event in events:
+        if event.latitude and event.longitude:
+            map_data.append({
+                'lat': event.latitude,
+                'lon': event.longitude,
+                'title': f"{event.artist.name} - {event.name}",
+                'date': event.date.strftime('%d.%m.%Y %H:%M'),
+                'city': event.city,
+                'venue': event.venue_name,
+                'ticket_url': event.ticket_url,
+            })
+
+    context = {
+        'events': events,
+        'map_data_json': json.dumps(map_data) 
+    }
+    return render(request, 'events/dashboard.html', context)

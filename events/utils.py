@@ -1,5 +1,6 @@
 import requests
 from django.conf import settings
+import time
 
 def get_tm_artist(artist_name):
     
@@ -64,3 +65,70 @@ def get_tm_artist_details(tm_id):
     except Exception as e:
         print(f"Error fetching details: {e}")
         return None
+
+def get_tm_events(artist_tm_id, city):
+   
+    url = "https://app.ticketmaster.com/discovery/v2/events.json"
+    params = {
+        'apikey': settings.TM_API_KEY,
+        'attractionId': artist_tm_id,
+        'city': city,
+        'sort': 'date,asc',  
+        'size': 20, 
+    }
+
+    try:
+        time.sleep(0.5) 
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if '_embedded' not in data or 'events' not in data['_embedded']:
+            return []
+
+        events_list = []
+        for event_item in data['_embedded']['events']:
+            venue_name = ""
+            city_name = ""
+            latitude = None
+            longitude = None
+
+            if '_embedded' in event_item and 'venues' in event_item['_embedded']:
+                venue = event_item['_embedded']['venues'][0] 
+                venue_name = venue.get('name', 'Неизвестная площадка')
+                city_name = venue.get('city', {}).get('name', city) 
+                
+                
+                location = venue.get('location', {})
+                latitude = float(location['latitude']) if 'latitude' in location else None
+                longitude = float(location['longitude']) if 'longitude' in location else None
+            
+            
+            ticket_status = event_item.get('dates', {}).get('status', {}).get('code', 'unknown')
+
+            start_dates = event_item.get('dates', {}).get('start', {})
+            event_date_str = start_dates.get('dateTime')
+
+            
+            if not event_date_str:
+                local_date = start_dates.get('localDate')
+                if local_date:
+                    event_date_str = f"{local_date}T00:00:00Z"
+                else:
+                    continue 
+            events_list.append({
+                'tm_event_id': event_item['id'],
+                'name': event_item['name'],
+                'date': event_date_str,
+                'venue_name': venue_name,
+                'city': city_name,
+                'latitude': latitude,
+                'longitude': longitude,
+                'ticket_url': event_item.get('url', '#'),
+                'ticket_status': ticket_status
+            })
+        return events_list
+
+    except requests.RequestException as e:
+        print(f"Error fetching events from TM: {e}")
+        return []
