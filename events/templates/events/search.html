@@ -5,13 +5,13 @@
     <div class="col-md-8">
         <h1 class="text-center mb-4">Поиск артистов</h1>
         
-        <!-- Форма поиска -->
+        
         <form method="get" class="d-flex gap-2 mb-5">
             {{ form.artist_name }}
             <button type="submit" class="btn btn-primary">Найти</button>
         </form>
 
-        <!-- Результаты -->
+        
         {% if results %}
             <h3>Результаты:</h3>
             <div class="list-group">
@@ -27,7 +27,7 @@
                     </div>
 
                     
-                    <a href="#" class="btn btn-outline-success btn-sm">Подписаться</a>
+                    <a href="{% url 'subscribe' artist.tm_id %}" class="btn btn-outline-success btn-sm">Подписаться</a>
                 </div>
                 {% endfor %}
             </div>
