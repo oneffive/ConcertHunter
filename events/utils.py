@@ -48,7 +48,7 @@ def get_tm_artist(artist_name):
         return []
 
 def get_tm_artist_details(tm_id):
-   
+    
     url = f"https://app.ticketmaster.com/discovery/v2/attractions/{tm_id}.json"
     params = {'apikey': settings.TM_API_KEY}
     try:
@@ -107,14 +107,23 @@ def get_tm_events(artist_tm_id, city):
             
             
             final_city = normalize_text(raw_city_name)
-            
+           
 
             ticket_status = event_item.get('dates', {}).get('status', {}).get('code', 'unknown')
+            start_dates = event_item.get('dates', {}).get('start', {})
+            event_date_str = start_dates.get('dateTime')
 
+            
+            if not event_date_str:
+                local_date = start_dates.get('localDate')
+                if local_date:
+                    event_date_str = f"{local_date}T00:00:00Z"
+                else:
+                    continue 
             events_list.append({
                 'tm_event_id': event_item['id'],
                 'name': event_item['name'],
-                'date': event_item['dates']['start']['dateTime'],
+                'date': event_date_str,
                 'venue_name': venue_name,
                 'city': final_city, 
                 'latitude': latitude,
