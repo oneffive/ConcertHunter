@@ -14,6 +14,42 @@
     <div class="col-12 mb-4">
         <h1 class="text-center">Мои концерты</h1>
     </div>
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Ваши активные подписки ({{ subscriptions.count }})</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if subscriptions %}
+                    <div class="list-group list-group-flush">
+                        {% for sub in subscriptions %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if sub.artist.image_url %}
+                                    <img src="{{ sub.artist.image_url }}" alt="{{ sub.artist.name }}" 
+                                         style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px; margin-right: 10px;">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ sub.artist.name }}</strong>
+                                    <span class="badge bg-secondary ms-2">{{ sub.city }}</span>
+                                </div>
+                            </div>
+                            
+                            <form action="{% url 'delete_subscription' sub.id %}" method="post" onsubmit="return confirm('Точно отписаться?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-3 text-muted text-center">
+                        Вы пока ни на кого не подписаны. <a href="{% url 'search' %}">Найти артистов</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
     
     <div class="col-12 mb-5">

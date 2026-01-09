@@ -1,5 +1,5 @@
 import json
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
@@ -106,6 +106,17 @@ def dashboard(request):
 
     context = {
         'events': events,
-        'map_data_json': json.dumps(map_data)
+        'map_data_json': json.dumps(map_data),
+        'subscriptions': user_subscriptions
     }
     return render(request, 'events/dashboard.html', context)
+
+@login_required
+def delete_subscription(request, sub_id):
+    subscription = get_object_or_404(Subscription, id=sub_id, user=request.user)
+    
+    artist_name = subscription.artist.name
+    subscription.delete()
+    
+    messages.success(request, f"Подписка на {artist_name} удалена.")
+    return redirect('dashboard')
