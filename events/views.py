@@ -8,6 +8,8 @@ from .forms import ArtistSearchForm, SubscriptionForm
 from .utils import get_tm_artist, get_tm_artist_details
 from .models import Artist, Subscription, Event
 from deep_translator import GoogleTranslator
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 
 def artist_search(request):
     search_form = ArtistSearchForm()
@@ -120,3 +122,16 @@ def delete_subscription(request, sub_id):
     
     messages.success(request, f"Подписка на {artist_name} удалена.")
     return redirect('dashboard')
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            login(request, user)
+            messages.success(request, "Регистрация прошла успешно!")
+            return redirect('dashboard')
+    else:
+        form = UserCreationForm()
+    
+    return render(request, 'registration/signup.html', {'form': form})
