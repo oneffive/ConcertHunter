@@ -1,6 +1,22 @@
 import requests
-from django.conf import settings
 import time
+import unicodedata  
+from django.conf import settings
+from deep_translator import GoogleTranslator
+
+def normalize_text(text):
+    
+    if not text:
+        return ""
+    
+    try:
+        translated = GoogleTranslator(source='auto', target='en').translate(text)
+    except:
+        translated = text
+    
+    
+    normalized = unicodedata.normalize('NFKD', translated).encode('ASCII', 'ignore').decode('utf-8')
+    return normalized.strip().title()
 
 def get_tm_artist(artist_name):
     
@@ -8,54 +24,38 @@ def get_tm_artist(artist_name):
     params = {
         'apikey': settings.TM_API_KEY,
         'keyword': artist_name,
-        'classificationName': 'music',  
-        'size': 5  
+        'classificationName': 'music',
+        'size': 5
     }
-
     try:
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
-
-        
-        if '_embedded' not in data:
-            return []
+        if '_embedded' not in data: return []
 
         artists_data = []
         for item in data['_embedded']['attractions']:
-            image_url = ""
-            if 'images' in item:
-                
-                image_url = item['images'][0]['url']
-
+            image_url = item['images'][0]['url'] if 'images' in item else ""
             artists_data.append({
                 'name': item['name'],
                 'tm_id': item['id'],
                 'image_url': image_url,
                 'external_url': item.get('url', '')
             })
-        
         return artists_data
-
     except requests.RequestException as e:
         print(f"Error fetching data from TM: {e}")
         return []
 
 def get_tm_artist_details(tm_id):
-    
+   
     url = f"https://app.ticketmaster.com/discovery/v2/attractions/{tm_id}.json"
     params = {'apikey': settings.TM_API_KEY}
-
     try:
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
-
-        
-        image_url = ""
-        if 'images' in data:
-            image_url = data['images'][0]['url']
-
+        image_url = data['images'][0]['url'] if 'images' in data else ""
         return {
             'tm_id': data['id'],
             'name': data['name'],
@@ -67,18 +67,17 @@ def get_tm_artist_details(tm_id):
         return None
 
 def get_tm_events(artist_tm_id, city):
-   
     url = "https://app.ticketmaster.com/discovery/v2/events.json"
     params = {
         'apikey': settings.TM_API_KEY,
         'attractionId': artist_tm_id,
         'city': city,
-        'sort': 'date,asc',  
-        'size': 20, 
+        'sort': 'date,asc',
+        'size': 20,
     }
 
     try:
-        time.sleep(0.5) 
+        time.sleep(0.5)
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -89,39 +88,35 @@ def get_tm_events(artist_tm_id, city):
         events_list = []
         for event_item in data['_embedded']['events']:
             venue_name = ""
-            city_name = ""
+            raw_city_name = city
             latitude = None
             longitude = None
 
             if '_embedded' in event_item and 'venues' in event_item['_embedded']:
-                venue = event_item['_embedded']['venues'][0] 
+                venue = event_item['_embedded']['venues'][0]
                 venue_name = venue.get('name', 'Неизвестная площадка')
-                city_name = venue.get('city', {}).get('name', city) 
                 
+                
+                raw_city_name = venue.get('city', {}).get('name', city)
                 
                 location = venue.get('location', {})
-                latitude = float(location['latitude']) if 'latitude' in location else None
-                longitude = float(location['longitude']) if 'longitude' in location else None
+                if 'latitude' in location:
+                    latitude = float(location['latitude'])
+                if 'longitude' in location:
+                    longitude = float(location['longitude'])
             
             
+            final_city = normalize_text(raw_city_name)
+            
+
             ticket_status = event_item.get('dates', {}).get('status', {}).get('code', 'unknown')
 
-            start_dates = event_item.get('dates', {}).get('start', {})
-            event_date_str = start_dates.get('dateTime')
-
-            
-            if not event_date_str:
-                local_date = start_dates.get('localDate')
-                if local_date:
-                    event_date_str = f"{local_date}T00:00:00Z"
-                else:
-                    continue 
             events_list.append({
                 'tm_event_id': event_item['id'],
                 'name': event_item['name'],
-                'date': event_date_str,
+                'date': event_item['dates']['start']['dateTime'],
                 'venue_name': venue_name,
-                'city': city_name,
+                'city': final_city, 
                 'latitude': latitude,
                 'longitude': longitude,
                 'ticket_url': event_item.get('url', '#'),
