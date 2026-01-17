@@ -17,14 +17,21 @@
             <div>
                 <a href="{% url 'search' %}" class="btn btn-outline-light me-3 btn-sm">Поиск артистов</a>
                 {% if user.is_authenticated %}
+                    
                     <span class="text-white me-3">Привет, {{ user.username }}</span>
+                    
+                   
                     <form action="{% url 'logout' %}" method="post" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-light btn-sm">Выйти</button>
                     </form>
-                    <a href="/admin/" class="btn btn-outline-light btn-sm ms-2">Admin</a>
+
+                    
+                    {% if user.is_staff %}
+                        <a href="/admin/" class="btn btn-outline-light btn-sm ms-2">Admin</a>
+                    {% endif %}
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Войти</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm me-2">Войти</a>
                     <a href="{% url 'signup' %}" class="btn btn-primary btn-sm">Регистрация</a>
                 {% endif %}
             </div>

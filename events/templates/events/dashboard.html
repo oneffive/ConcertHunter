@@ -22,25 +22,45 @@
             <div class="card-body p-0">
                 {% if subscriptions %}
                     <div class="list-group list-group-flush">
-                        {% for sub in subscriptions %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                {% if sub.artist.image_url %}
-                                    <img src="{{ sub.artist.image_url }}" alt="{{ sub.artist.name }}" 
-                                         style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px; margin-right: 10px;">
-                                {% endif %}
-                                <div>
-                                    <strong>{{ sub.artist.name }}</strong>
-                                    <span class="badge bg-secondary ms-2">{{ sub.city }}</span>
+                        <div class="list-group list-group-flush">
+                            {% for sub in subscriptions %}
+                            <div class="list-group-item">
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        {% if sub.artist.image_url %}
+                                            <img src="{{ sub.artist.image_url }}" alt="{{ sub.artist.name }}" 
+                                                style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px; margin-right: 10px;">
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ sub.artist.name }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ sub.city }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-2">
+                                        
+                                        <a href="{% url 'city_events' sub.city %}" class="btn btn-outline-primary btn-sm" title="Все события в {{ sub.city }}">
+                                             Афиша города
+                                        </a>
+                                        
+                                        
+                                        <form action="{% url 'delete_subscription' sub.id %}" method="post" onsubmit="return confirm('Точно отписаться?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">X</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                
+                                <div class="mt-1">
+                                <small class="text-muted" style="font-size: 0.8rem;">
+                                    Нет концертов артиста? Посмотрите <a href="{% url 'city_events' sub.city %}">другие события в {{ sub.city }}</a>.
+                                </small>
                                 </div>
                             </div>
-                            
-                            <form action="{% url 'delete_subscription' sub.id %}" method="post" onsubmit="return confirm('Точно отписаться?');">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
-                            </form>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                 {% else %}
                     <div class="p-3 text-muted text-center">

@@ -1,0 +1,71 @@
+{% extends 'events/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Афиша: {{ city }}</h1>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Назад</a>
+    </div>
+
+    
+    <div class="card mb-4 bg-light">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Жанр</label>
+                    <select name="genre" class="form-select">
+                        
+                        <option value="Music" {% if current_genre == 'Music' %}selected{% endif %}>Все жанры музыки</option>
+                        
+                        
+                        <option value="Rock" {% if current_genre == 'Rock' %}selected{% endif %}>Рок</option>
+                        <option value="Pop" {% if current_genre == 'Pop' %}selected{% endif %}>Поп</option>
+                        <option value="Hip-Hop" {% if current_genre == 'Hip-Hop' %}selected{% endif %}>Хип-хоп / Рэп</option>
+                        <option value="Electronic" {% if current_genre == 'Electronic' %}selected{% endif %}>Электроника</option>
+                        <option value="Metal" {% if current_genre == 'Metal' %}selected{% endif %}>Метал</option>
+                        <option value="Jazz" {% if current_genre == 'Jazz' %}selected{% endif %}>Джаз</option>
+                        <option value="Classical" {% if current_genre == 'Classical' %}selected{% endif %}>Классика</option>
+                        <option value="Alternative" {% if current_genre == 'Alternative' %}selected{% endif %}>Альтернатива</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Дата (начиная с)</label>
+                    <input type="date" name="date" class="form-control" value="{{ current_date }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Применить фильтр</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+    <div class="row">
+        {% if events %}
+            {% for event in events %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if event.image_url %}
+                        <img src="{{ event.image_url }}" class="card-img-top" alt="{{ event.name }}" style="height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <div class="card-body">
+                        <span class="badge bg-info text-dark mb-2">{{ event.genre }}</span>
+                        <h5 class="card-title">{{ event.name }}</h5>
+                        <p class="card-text text-muted">
+                            📅 {{ event.date }} {{ event.time }}<br>
+                            📍 {{ event.venue }}
+                        </p>
+                        <a href="{{ event.ticket_url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">Билеты</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <h3>Ничего не найдено </h3>
+                <p>Попробуйте изменить фильтры или выбрать другую дату.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
