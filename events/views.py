@@ -135,3 +135,13 @@ def signup(request):
         form = UserCreationForm()
     
     return render(request, 'registration/signup.html', {'form': form})
+@login_required
+def delete_event(request, event_id):
+    
+    event = get_object_or_404(Event, id=event_id)
+    
+    
+    event.delete()
+    
+    messages.success(request, "Событие удалено из ленты.")
+    return redirect('dashboard')

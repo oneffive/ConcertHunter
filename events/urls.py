@@ -7,4 +7,5 @@ urlpatterns = [
     path('subscribe/<str:tm_id>/', views.subscribe, name='subscribe'),
     path('delete/<int:sub_id>/', views.delete_subscription, name='delete_subscription'),
     path('signup/', views.signup, name='signup'),
+    path('delete_event/<int:event_id>/', views.delete_event, name='delete_event'),
 ]
