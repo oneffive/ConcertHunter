@@ -61,20 +61,32 @@
         {% if events %}
             <div class="row">
                 {% for event in events %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ event.artist.name }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ event.name }}</h6>
-                            <p class="card-text">
-                                 {{ event.date|date:"d M Y H:i" }}<br>
-                                 {{ event.venue_name }}, {{ event.city }}
-                            </p>
-                            <a href="{{ event.ticket_url }}" target="_blank" class="btn btn-primary btn-sm">Купить билет</a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+<div class="col-md-6 col-lg-4 mb-4">
+    
+    <div class="card h-100 shadow-sm position-relative">
+        
+        
+        <form action="{% url 'delete_event' event.id %}" method="post" style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+            {% csrf_token %}
+            
+            <button type="submit" class="btn-close" aria-label="Close" 
+                    onclick="return confirm('Скрыть это событие?');" 
+                    title="Удалить событие"></button>
+        </form>
+        
+
+        <div class="card-body">
+            <h5 class="card-title pe-4">{{ event.artist.name }}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">{{ event.name }}</h6>
+            <p class="card-text">
+                📅 {{ event.date|date:"d M Y H:i" }}<br>
+                📍 {{ event.venue_name }}, {{ event.city }}
+            </p>
+            <a href="{{ event.ticket_url }}" target="_blank" class="btn btn-primary btn-sm">Купить билет</a>
+        </div>
+    </div>
+</div>
+{% endfor %}
             </div>
         {% else %}
             <div class="alert alert-info text-center">
