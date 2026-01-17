@@ -136,3 +136,57 @@ def get_tm_events(artist_tm_id, city):
     except requests.RequestException as e:
         print(f"Error fetching events from TM: {e}")
         return []
+def get_general_events_in_city(city, genre=None, start_date=None):
+    
+    url = "https://app.ticketmaster.com/discovery/v2/events.json"
+    
+    params = {
+        'apikey': settings.TM_API_KEY,
+        'city': city,
+        'sort': 'date,asc',
+        'size': 20,
+    }
+
+   
+    if genre and genre != 'All':
+        params['classificationName'] = genre  
+    
+    if start_date:
+        
+        params['startDateTime'] = f"{start_date}T00:00:00Z"
+
+    try:
+        time.sleep(0.5)
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if '_embedded' not in data or 'events' not in data['_embedded']:
+            return []
+
+        events_list = []
+        for event_item in data['_embedded']['events']:
+            
+            
+            image_url = ""
+            if 'images' in event_item:
+                image_url = event_item['images'][0]['url']
+
+            venue_name = "Unknown Venue"
+            if '_embedded' in event_item and 'venues' in event_item['_embedded']:
+                venue_name = event_item['_embedded']['venues'][0].get('name', '')
+
+            events_list.append({
+                'name': event_item['name'],
+                'date': event_item['dates']['start'].get('localDate', 'TBA'),
+                'time': event_item['dates']['start'].get('localTime', ''),
+                'venue': venue_name,
+                'image_url': image_url,
+                'ticket_url': event_item.get('url', '#'),
+                'genre': event_item['classifications'][0]['segment']['name'] if 'classifications' in event_item else 'Unknown'
+            })
+        return events_list
+
+    except requests.RequestException as e:
+        print(f"Error fetching city events: {e}")
+        return []

@@ -10,6 +10,8 @@ from .models import Artist, Subscription, Event
 from deep_translator import GoogleTranslator
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from .utils import get_general_events_in_city
+from .utils import get_tm_events
 
 def artist_search(request):
     search_form = ArtistSearchForm()
@@ -27,6 +29,8 @@ def artist_search(request):
     }
     return render(request, 'events/search.html', context)
 
+
+
 @login_required
 def subscribe(request, tm_id):
     artist_data = get_tm_artist_details(tm_id)
@@ -41,9 +45,7 @@ def subscribe(request, tm_id):
             raw_city = form.cleaned_data['city']
 
             try:
-                
                 city_english = GoogleTranslator(source='auto', target='en').translate(raw_city)
-                
                 city_english = city_english.strip().title()
             except Exception as e:
                 print(f"Ошибка перевода: {e}")
@@ -57,7 +59,6 @@ def subscribe(request, tm_id):
                 }
             )
 
-            
             sub, sub_created = Subscription.objects.get_or_create(
                 user=request.user,
                 artist=artist,
@@ -66,6 +67,34 @@ def subscribe(request, tm_id):
 
             if sub_created:
                 messages.success(request, f"Вы подписались на {artist.name} в городе {city_english}!")
+                
+                
+                print(f"Мгновенный поиск событий для {artist.name} в {city_english}...")
+                new_events_data = get_tm_events(artist.tm_id, city_english)
+                
+                count = 0
+                for event_item in new_events_data:
+                    
+                    if not Event.objects.filter(tm_event_id=event_item['tm_event_id']).exists():
+                        Event.objects.create(
+                            artist=artist,
+                            name=event_item['name'],
+                            date=event_item['date'],
+                            venue_name=event_item['venue_name'],
+                            city=event_item['city'],
+                            latitude=event_item['latitude'],
+                            longitude=event_item['longitude'],
+                            ticket_url=event_item['ticket_url'],
+                            tm_event_id=event_item['tm_event_id']
+                        )
+                        count += 1
+                
+                if count > 0:
+                    messages.success(request, f"Найдено {count} концертов! Они добавлены в ваш календарь.")
+                else:
+                    messages.warning(request, "Подписка создана, но концертов пока не найдено.")
+                
+
             else:
                 messages.info(request, f"Вы уже подписаны на этого артиста в городе {city_english}.")
             
@@ -145,3 +174,19 @@ def delete_event(request, event_id):
     
     messages.success(request, "Событие удалено из ленты.")
     return redirect('dashboard')
+@login_required
+def city_events(request, city_name):
+    
+    genre_filter = request.GET.get('genre', 'Music') 
+    date_filter = request.GET.get('date', '')
+
+    
+    events = get_general_events_in_city(city_name, genre=genre_filter, start_date=date_filter)
+
+    context = {
+        'city': city_name,
+        'events': events,
+        'current_genre': genre_filter,
+        'current_date': date_filter
+    }
+    return render(request, 'events/city_events.html', context)

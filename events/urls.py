@@ -8,4 +8,5 @@ urlpatterns = [
     path('delete/<int:sub_id>/', views.delete_subscription, name='delete_subscription'),
     path('signup/', views.signup, name='signup'),
     path('delete_event/<int:event_id>/', views.delete_event, name='delete_event'),
+    path('city/<str:city_name>/', views.city_events, name='city_events'),
 ]
