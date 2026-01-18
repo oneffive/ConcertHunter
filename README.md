@@ -8,29 +8,42 @@
 
 ## Стек технологий
 
-*   **Backend:** Python 3.10, Django 5.0
+*   **Backend:** Python 3.10, Django 5.0.7
 *   **External API:** Ticketmaster Discovery API (поиск артистов и событий)
 *   **Frontend:** Bootstrap 5 (UI/UX), HTML5, CSS3
 *   **Geolocation & Maps:** Leaflet.js + OpenStreetMap (интерактивная карта)
 *   **Data Processing:**
     *   `requests` — для работы с внешним API
-    *   `deep-translator` — для автоматического перевода и нормализации названий городов (решение проблемы "İstanbul" vs "Istanbul")
+    *   `deep-translator` — для автоматического перевода и нормализации названий городов
     *   `unicodedata` — очистка текста от диакритических знаков
 
 ---
 
 ##  Интерфейс и возможности
 
-### 1. Личный кабинет и карта
-Главная страница пользователя, содержащая список отслеживаемых концертов и интерактивную карту с их географическим расположением.
+### 1. Управление подписками
+Блок управления подписками в личном кабинете. Здесь можно увидеть список отслеживаемых артистов, удалить подписку или перейти к общей афише города, если концертов любимой группы пока нет.
 
-<img width="893" height="796" alt="image (5)" src="https://github.com/user-attachments/assets/5ea402ac-ac33-4d88-b99d-89546394714e" />
+<img width="1699" height="902" alt="Снимок экрана 2026-01-18 140205" src="https://github.com/user-attachments/assets/451ffbde-836a-457c-9701-64d4886053f4" />
 
 
 ### 2. Умный поиск и подписка
 Страница поиска артистов с возможностью подписки. Результаты загружаются из глобальной базы Ticketmaster, каждая позиция доступна для добавления в список отслеживаемых исполнителей.
 
-<img width="1915" height="917" alt="image (4)" src="https://github.com/user-attachments/assets/5c0939c4-39d0-489f-90da-30cadd4c8c54" />
+<img width="1754" height="894" alt="Снимок экрана 2026-01-18 140621" src="https://github.com/user-attachments/assets/cebc61b5-3bd3-4697-850d-4afdaf6c4d62" />
+
+
+### 3. Карта событий и управление лентой
+Маркеры на карте показывают города проведения концертов. Под картой расположен детальный список событий: каждая карточка содержит информацию о дате и месте проведения, кнопку для быстрой покупки билета, а также функцию удаления события из ленты.
+
+<img width="1338" height="873" alt="Снимок экрана 2026-01-18 140534" src="https://github.com/user-attachments/assets/ad8760bc-90d5-48b2-b51b-dbbd68919776" />
+
+
+
+### 4. Афиша города и фильтры
+Дополнительный инструмент поиска. Если у отслеживаемого артиста нет концертов, вы можете изучить общую музыкальную афишу выбранного города. Страница позволяет фильтровать события по жанрам (рок, метал, джаз и др.) и датам, помогая найти альтернативные мероприятия для досуга.
+
+<img width="1792" height="827" alt="Снимок экрана 2026-01-18 140833" src="https://github.com/user-attachments/assets/8f41a76f-70a9-4cc1-8947-145887c4c78a" />
 
 
 ---
@@ -76,7 +89,9 @@ DEBUG=True
 
 Совет: чтобы сгенерировать новый надежный SECRET_KEY, вы можете выполнить эту команду в терминале:
 ```bash
-python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+python
+from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())
+exit()
 ```
 
 ### 5. Выполните миграции:
@@ -84,15 +99,11 @@ python -c 'from django.core.management.utils import get_random_secret_key; print
 python manage.py migrate
 ```
 
-### 6. Наполните базу данных:
-```bash
-python manage.py update_events
-```
 
-### 7. Запустите сервер:
+### 6. Запустите сервер:
 ```bash
 python manage.py runserver
 ```
 
-### 8. Готово
+### 7. Готово
 Откройте в браузере: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
