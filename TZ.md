@@ -50,6 +50,9 @@
 *   **latitude / longitude** (FloatFields): географические координаты для отображения на карте.
 *   **ticket_url** (URLField): прямая ссылка на покупку билета.
 *   **tm_event_id** (CharField, unique): ID события во внешней системе (защита от дублей).
+  
+  <img width="506" height="744" alt="Снимок экрана 2026-01-19 145008" src="https://github.com/user-attachments/assets/621f524d-ad97-4099-92be-d65fd0bf4537" />
+
 
 ## 4. Ключевой функционал (User Stories)
 
